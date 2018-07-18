@@ -744,11 +744,12 @@ class UserController extends BaseController
 
                 array_push($node_prefix[$name_cheif], $node);
 
-				$regex=Config::get('flag_regex');
-				$matches=array();
-				preg_match($regex,$name_cheif,$matches);
-				$node_flag_file[$name_cheif]=$matches[0];
-				
+				if(Config::get('enable_flag')==true){
+					$regex=Config::get('flag_regex');
+					$matches=array();
+					preg_match($regex,$name_cheif,$matches);
+					$node_flag_file[$name_cheif]=$matches[0];
+				}
             }
         }
         $node_prefix=(object)$node_prefix;
@@ -1294,7 +1295,7 @@ class UserController extends BaseController
 
         if ($user->money<$price) {
             $res['ret'] = 0;
-            $res['msg'] = "余额不足，总价为".$price."元。";
+            $res['msg'] = '喵喵喵~ 当前余额不足，总价为'.$price.'元。</br><a href="/user/code">点击进入充值界面</a>';
             return $response->getBody()->write(json_encode($res));
         }
 
