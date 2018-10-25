@@ -7,8 +7,11 @@
  */
 
 namespace App\Services;
-use App\Services\Gateway\AopF2F;
-use App\Services\Gateway\DoiAMPay;
+
+use App\Services\Config;
+use App\Services\Gateway\{
+    AopF2F, Codepay, DoiAMPay, PaymentWall, ChenPay, SPay, TrimePay, YftPay
+};
 
 class Payment
 {
@@ -16,21 +19,23 @@ class Payment
         $method = Config::get("payment_system");
         switch($method){
             case("codepay"):
-
+                return new Codepay();
             case("doiampay"):
                 return new DoiAMPay();
             case("paymentwall"):
-
-            case("zfbjk"):
-
+                return new PaymentWall();
             case("spay"):
-
+                return new SPay();
             case("f2fpay"):
                 return new AopF2F();
             case("yftpay"):
-
+                return new YftPay();
+            case("chenAlipay"):
+                return new ChenPay();
+            case("trimepay"):
+                return new TrimePay(Config::get('trimepay_secret'));
             default:
-                return 0;
+                return NULL;
         }
     }
 
@@ -42,8 +47,12 @@ class Payment
         return self::getClient()->getReturnHTML($request, $response, $args);
     }
 
-    public static function purchaseHTML(){
-        return self::getClient()->getPurchaseHTML();
+	public static function purchaseHTML(){
+		if (self::getClient() != NULL) {
+			return self::getClient()->getPurchaseHTML();
+		} else {
+			return '';
+		}
     }
 
     public static function getStatus($request, $response, $args){

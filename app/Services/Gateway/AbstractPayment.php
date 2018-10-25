@@ -13,27 +13,23 @@ use App\Models\Payback;
 use App\Models\User;
 use App\Models\Code;
 use App\Services\Config;
-
+use App\Utils\Telegram;
 
 abstract class AbstractPayment
 {
-    public $method;
-    abstract protected function init();
-    abstract protected function setMethod($method);
-    abstract protected function setNotifyUrl();
-    abstract protected function setReturnUrl();
-    abstract protected function purchase($request, $response, $args);
-    abstract protected function notify($request, $response, $args);
-    abstract protected function sign();
-    abstract protected function getPurchaseHTML();
-    abstract protected function getReturnHTML($request, $response, $args);
-    abstract protected function getStatus($request, $response, $args);
+    abstract public function purchase($request, $response, $args);
+    abstract public function notify($request, $response, $args);
+    abstract public function getPurchaseHTML();
+    abstract public function getReturnHTML($request, $response, $args);
+    abstract public function getStatus($request, $response, $args);
 
     public function postPayment($pid, $method){
-        $p=Paylist::find($pid);
+        $p = Paylist::where("tradeno", $pid)->first();
+
         if($p->status==1){
             return json_encode(['errcode'=>0]);
         }
+
         $p->status=1;
         $p->save();
         $user = User::find($p->userid);
@@ -48,7 +44,7 @@ abstract class AbstractPayment
         $codeq->userid=$user->id;
         $codeq->save();
 
-        if ($user->ref_by!="" && $user->ref_by!=0 && $user->ref_by!=null) {
+        if ($user->ref_by >= 1) {
             $gift_user=User::where("id", "=", $user->ref_by)->first();
             $gift_user->money=($gift_user->money+($codeq->number*(Config::get('code_payback')/100)));
             $gift_user->save();
@@ -71,5 +67,21 @@ abstract class AbstractPayment
         return 0;
 
     }
+
+    public static function generateGuid() {
+        mt_srand((double)microtime()*10000);
+        $charid = strtoupper(md5(uniqid(rand() + time(), true)));
+        $hyphen = chr(45);
+        $uuid   = chr(123)
+            .substr($charid, 0, 8).$hyphen
+            .substr($charid, 8, 4).$hyphen
+            .substr($charid,12, 4).$hyphen
+            .substr($charid,16, 4).$hyphen
+            .substr($charid,20,12)
+            .chr(125);
+        $uuid = str_replace(['}', '{', '-'],'',$uuid);
+        return $uuid;
+    }
+
 
 }
