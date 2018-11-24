@@ -253,7 +253,9 @@ class AuthController extends BaseController
                     //BASE_PATH.'/public/assets/email/styles.css'
                 ]);
             } catch (\Exception $e) {
-                return false;
+                $res['ret'] = 1;
+                $res['msg'] = "邮件发送失败，请联系网站管理员。";
+                return $response->getBody()->write(json_encode($res));
             }
 
             $res['ret'] = 1;
@@ -481,7 +483,9 @@ class AuthController extends BaseController
             if ($this->telegram_oauth_check($auth_data) === true) { // Looks good, proceed.
                 $telegram_id = $auth_data['id'];
                 $user = User::query()->where('telegram_id', $telegram_id)->firstOrFail(); // Welcome Back :)
-
+                if($user == null){
+                    return $this->view()->assign('title', '您需要先进行邮箱注册后绑定Telegram才能使用授权登录')->assign('message', '很抱歉带来的不便，请重新试试')->assign('redirect', '/auth/login')->display('telegram_error.tpl');
+                }
                 Auth::login($user->id, 3600);
                 $this->logUserIp($user->id, $_SERVER["REMOTE_ADDR"]);
 
